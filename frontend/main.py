@@ -1,30 +1,9 @@
 import gradio as gr
 import requests
 
-from taskFunctions import create_task,complete_task,get_tasks,assign_task,delete_task,format_tasks
+from taskFunctions import create_task,complete_task,get_tasks,assign_task,delete_task,format_tasks,show_task,load_tasks,scroll_left,scroll_right,import_current_task,login_or_create
 
 API_URL = "http://127.0.1.1:8008/"
-
-
-def login_or_create(username, role):
-    if not username:
-        return "Username cannot be empty."
-
-    USERS = requests.get(f"{API_URL}/users/").json()
-    
-    if username in [x['username'] for x in USERS]:
-        for name in USERS:
-            if name['username'] == username:
-                user = name
-        return f"Welcome back, {user['username']} ({user['role']})!", user
-    else:
-        payload = {
-            "username": username,
-            "role": role,
-        }
-        requests.post(f"{API_URL}/users/", json=payload)
-
-        return f"User {username} created with role '{role}'.", payload
 
 with gr.Blocks(title="Task Management App") as demo:
     current_user = gr.State({})
@@ -100,5 +79,33 @@ with gr.Blocks(title="Task Management App") as demo:
             inputs=[task],
             outputs=assign_output
         )
+
+    with gr.Tab("Import issues from Github"):
+        import_btn = gr.Button("Load Tasks from Github")
+        
+        with gr.Row("Task"):
+            with gr.Column(scale=1):
+                pass  
+            with gr.Column(scale=2, min_width=300):
+                task_display = gr.Markdown("No tasks loaded yet", elem_classes="centered")
+            with gr.Column(scale=1):
+                pass  
+
+        priority = gr.Dropdown(["low", "medium", "high"], label="Priority")
+        
+        with gr.Row("Buttons"):
+            left_btn = gr.Button("⟵")
+            import_btn_task = gr.Button("Import Task")
+            right_btn = gr.Button("⟶")
+        
+        status = gr.JSON()
+        
+        tasks_state = gr.State([])
+        index_state = gr.State(0)
+        
+        import_btn.click(load_tasks, outputs=[tasks_state, index_state, task_display, index_state])
+        left_btn.click(scroll_left, inputs=[tasks_state, index_state], outputs=[task_display, index_state])
+        right_btn.click(scroll_right, inputs=[tasks_state, index_state], outputs=[task_display, index_state])
+        import_btn_task.click(import_current_task, inputs=[tasks_state, index_state, priority], outputs=status)
 
 demo.launch()
