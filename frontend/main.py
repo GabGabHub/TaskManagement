@@ -1,5 +1,4 @@
 import gradio as gr
-import requests
 
 from taskFunctions import create_task,complete_task,get_tasks,assign_task,delete_task,format_tasks,show_task,load_tasks,scroll_left,scroll_right,import_current_task,login_or_create
 
@@ -107,5 +106,6 @@ with gr.Blocks(title="Task Management App") as demo:
         left_btn.click(scroll_left, inputs=[tasks_state, index_state], outputs=[task_display, index_state])
         right_btn.click(scroll_right, inputs=[tasks_state, index_state], outputs=[task_display, index_state])
         import_btn_task.click(import_current_task, inputs=[tasks_state, index_state, priority], outputs=status)
+
 
 demo.launch()
