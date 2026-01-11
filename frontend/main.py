@@ -1,63 +1,14 @@
-import datetime
 import gradio as gr
 import requests
 
+from taskFunctions import create_task,complete_task,get_tasks,assign_task,delete_task,format_tasks
+
 API_URL = "http://127.0.1.1:8008/"
 
-def create_task(title, description, priority):
-    payload = {
-        "title": title,
-        "description": description,
-        "priority": priority
-    }
-    r = requests.post(f"{API_URL}/tasks/", json=payload)
-    return r.json()
 
-def get_tasks():
-    r = requests.get(f"{API_URL}/tasks/")
-    return r.json()
-
-def assign_task(task, username):
-    r = requests.put(
-        f"{API_URL}/tasks/{task}",
-        json=username
-    )
-    return current_user
-
-def complete_task(task):
-    r = requests.put(
-        f"{API_URL}/tasks/complete/{task}",
-    )
-    return r.json()
-
-def delete_task(task):
-    r = requests.delete(
-        f"{API_URL}/tasks/{task}",
-    )
-    return r.json()
-
-
-def format_tasks(tasks):
-    if not tasks:
-        return "No tasks found."
-    output = ""
-    for t in tasks:
-        output += (
-            f"Title: {t["title"]}\n"
-            f"Description: {t["description"]}\n"
-            f"Status: {t["status"]}\n"
-            f"Priority: {t["priority"]}\n"
-            f"Assigned To: {t["assignedTo"]}\n"
-            "------------------------\n"
-        )
-    return output
-
-
-
-
-def login_or_create(username, role, user_state):
+def login_or_create(username, role):
     if not username:
-        return "Username cannot be empty.", user_state
+        return "Username cannot be empty."
 
     USERS = requests.get(f"{API_URL}/users/").json()
     
@@ -73,17 +24,10 @@ def login_or_create(username, role, user_state):
         }
         requests.post(f"{API_URL}/users/", json=payload)
 
-        user = {"username": username, "role": role}
-        return f"User {username} created with role '{role}'.", user
-
-
-
-
-
+        return f"User {username} created with role '{role}'.", payload
 
 with gr.Blocks(title="Task Management App") as demo:
-    current_user = gr.State(None)
-    current_user.value = {}
+    current_user = gr.State({})
 
     gr.Markdown("# Task Management Dashboard")
 
@@ -91,31 +35,15 @@ with gr.Blocks(title="Task Management App") as demo:
         gr.Markdown("### Login or Create User")
 
         username_input = gr.Textbox(label="Username")
-        role_input = gr.Dropdown(
-            choices=["user", "admin"],
-            value="user",
-            label="Role"
-        )
-
+        role_input = gr.Dropdown(["user", "admin"], value="user")
         login_btn = gr.Button("Login / Create")
-        status_output = gr.Textbox(label="Status", interactive=False)
+        status_output = gr.Textbox(interactive=False)
 
         login_btn.click(
             fn=login_or_create,
-            inputs=[username_input, role_input, current_user],
+            inputs=[username_input, role_input],
             outputs=[status_output, current_user]
             )
-
-    with gr.Tab("Welcome"):
-        title = gr.Textbox(f"Welcome! {current_user}")
-        update_btn = gr.Button("Update")
-
-        def update():
-            title.value = current_user
-
-        update_btn.click(
-            fn= update
-        )
 
     with gr.Tab("Create Task"):
         title = gr.Textbox(label="Title")
@@ -147,7 +75,7 @@ with gr.Blocks(title="Task Management App") as demo:
 
         assign_btn.click(
             assign_task,
-            inputs=[task],
+            inputs=[task, current_user],
             outputs=assign_output
         )
     

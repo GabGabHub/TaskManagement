@@ -13,14 +13,16 @@ def convertUser(user) -> dict:
     }
 
 router = APIRouter(
- prefix="/users",
- tags=["users"]
+    prefix="/users",
+    tags=["users"]
 )
 
 @router.post("/")
-def create_user(user: User):
+def create_user(name: str, rol: str):
+    user = User(username= name,role = rol)
     user.joinedAt = datetime.datetime.now(datetime.UTC)
     user_dict = user.model_dump()
+    print(user_dict)
     result = user_collection.insert_one(user_dict)
     new_user = user_collection.find_one({"_id": result.inserted_id})
     return {

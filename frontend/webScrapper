@@ -1,0 +1,41 @@
+import requests
+from bs4 import BeautifulSoup
+
+def scrape_github_issues():
+    url = f"https://github.com/fastapi/fastapi/issues"
+    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+    r.raise_for_status()
+
+    soup = BeautifulSoup(r.text, "html.parser")
+
+    print(soup.select("div[js-issue-row]"))
+
+    issues = []
+    for item in soup.select("div[js-issue-row]"):
+        title_el = item.select_one("a[data-hovercard-type='issue']")
+
+        if not title_el:
+            continue
+
+
+        title = title_el.text.strip()
+        issue_url = "https://github.com" + title_el["href"]
+        issue_number = title_el["href"].split("/")[-1]
+
+        labels = [l.text.strip() for l in item.select("a.IssueLabel")]
+        priority = "high" if "bug" in labels else "medium"
+
+        issues.append({
+            "external_id": issue_number,
+            "title": title,
+            "description": f"Imported from GitHub issue {issue_url}",
+            "priority": priority,
+            "source": "github",
+            "source_url": issue_url
+        })
+
+    return issues
+
+test = scrape_github_issues()
+
+print(test)
