@@ -16,3 +16,4 @@ class User(BaseModel):
     username: str
     role: str = "user"
     joinedAt: Optional[datetime] = None
+    
